@@ -435,7 +435,7 @@ public:
 
 	void save_current_script();
 	void save_all_scripts();
-    void close_moved_script(const String &p_rename);
+    void resolve_root_script_move(const String &p_root_script_path);
 
 	void set_window_layout(Ref<ConfigFile> p_layout);
 	void get_window_layout(Ref<ConfigFile> p_layout);

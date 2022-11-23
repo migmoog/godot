@@ -1151,8 +1151,11 @@ void FileSystemDock::_try_move_item(const FileOrFolder &p_item, const String &p_
 		// Update scene if it is open.
 		for (int i = 0; i < file_changed_paths.size(); ++i) {
 			String new_item_path = p_item.is_file ? new_path : file_changed_paths[i].replace_first(old_path, new_path);
-			if (ResourceLoader::get_resource_type(new_item_path) == "PackedScene" && editor->is_scene_open(file_changed_paths[i])) {
-				EditorData *ed = &editor->get_editor_data();
+			String resource_type = ResourceLoader::get_resource_type(new_item_path);
+            EditorData *ed = &editor->get_editor_data();
+            int current_tab = editor->get_current_tab();
+
+            if (resource_type == "PackedScene" && editor->is_scene_open(file_changed_paths[i])) {
 				for (int j = 0; j < ed->get_edited_scene_count(); j++) {
 					if (ed->get_scene_path(j) == file_changed_paths[i]) {
 						ed->get_edited_scene_root(j)->set_filename(new_item_path);
@@ -1160,7 +1163,11 @@ void FileSystemDock::_try_move_item(const FileOrFolder &p_item, const String &p_
 						break;
 					}
 				}
-			}
+			} else if (resource_type == "GDScript" && ed->get_scene_root_script(current_tab)->get_path() == file_changed_paths[i]) {
+                print_verbose("LOCATED MOVED ROOT SCRIPT AND COMMENCING MOVE");
+//                Ref<Script> root_script = ed->get_scene_root_script(current_tab);
+                ScriptEditor::get_singleton()->resolve_root_script_move(file_changed_paths[i]);
+            }
 		}
 
 		// Only treat as a changed dependency if it was successfully moved.
@@ -1170,12 +1177,6 @@ void FileSystemDock::_try_move_item(const FileOrFolder &p_item, const String &p_
 			emit_signal("files_moved", file_changed_paths[i], p_file_renames[file_changed_paths[i]]);
 
             print_verbose("RESOURCE TYPE: " + ResourceLoader::get_resource_type(file_changed_paths[i]));
-
-            // without this check and call, the script editor will create useless "[unsaved]" tabs in
-            // the script editor that are identical to the moved script, so this method must be called.
-            if (ResourceLoader::get_resource_type(file_changed_paths[i]) == "GDScript") {
-                ScriptEditor::get_singleton()->close_root_script(file_changed_paths[i]);
-            }
 		}
 		for (int i = 0; i < folder_changed_paths.size(); ++i) {
 			p_folder_renames[folder_changed_paths[i]] = folder_changed_paths[i].replace_first(old_path, new_path);
