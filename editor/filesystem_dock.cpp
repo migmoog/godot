@@ -1168,6 +1168,14 @@ void FileSystemDock::_try_move_item(const FileOrFolder &p_item, const String &p_
 			p_file_renames[file_changed_paths[i]] = file_changed_paths[i].replace_first(old_path, new_path);
 			print_verbose("  Remap: " + file_changed_paths[i] + " -> " + p_file_renames[file_changed_paths[i]]);
 			emit_signal("files_moved", file_changed_paths[i], p_file_renames[file_changed_paths[i]]);
+
+            print_verbose("RESOURCE TYPE: " + ResourceLoader::get_resource_type(file_changed_paths[i]));
+
+            // without this check and call, the script editor will create useless "[unsaved]" tabs in
+            // the script editor that are identical to the moved script, so this method must be called.
+            if (ResourceLoader::get_resource_type(file_changed_paths[i]) == "GDScript") {
+                ScriptEditor::get_singleton()->close_root_script(file_changed_paths[i]);
+            }
 		}
 		for (int i = 0; i < folder_changed_paths.size(); ++i) {
 			p_folder_renames[folder_changed_paths[i]] = folder_changed_paths[i].replace_first(old_path, new_path);

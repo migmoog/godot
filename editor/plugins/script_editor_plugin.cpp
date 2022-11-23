@@ -3570,6 +3570,22 @@ ScriptEditor::~ScriptEditor() {
 	memdelete(completion_cache);
 }
 
+void ScriptEditor::close_moved_script(const String &p_rename) {
+    // FIXME: this method closes unattached/inner scripts, should just check if it's open
+    // TODO: Find way to get path of current scene tab's script, instead of this bullshit
+    // TODO: ! additional note, the path also may not be necessary, as this behavior only occurs with the root node's script
+
+    Vector<Ref<Script>> open_scripts = get_open_scripts();
+
+    for (int i = 0; i < open_scripts.size(); ++i) {
+        print_verbose("new path: " + p_rename + ", \ncurrent path: " + open_scripts[i]->get_path());
+
+        if (open_scripts[i]->get_path() == p_rename) {
+            _close_tab(i, false, false);
+        }
+    }
+}
+
 void ScriptEditorPlugin::edit(Object *p_object) {
 	if (Object::cast_to<Script>(p_object)) {
 		Script *p_script = Object::cast_to<Script>(p_object);
