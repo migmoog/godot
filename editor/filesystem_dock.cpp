@@ -1164,8 +1164,8 @@ void FileSystemDock::_try_move_item(const FileOrFolder &p_item, const String &p_
 					}
 				}
 			} else if (resource_type == "GDScript") {
-				ScriptEditor::get_singleton()->resolve_current_scene_move(current_tab, old_path, new_path);
-            }
+				ScriptEditor::get_singleton()->resolve_edited_scene_move(current_tab, old_path, new_path);
+			}
 		}
 
 		// Only treat as a changed dependency if it was successfully moved.

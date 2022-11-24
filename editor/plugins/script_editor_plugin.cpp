@@ -3570,8 +3570,7 @@ ScriptEditor::~ScriptEditor() {
 	memdelete(completion_cache);
 }
 
-// FIXME: Now this method works, but it also crashes if you move more than one file. Not sure if it's my fault but I assume it is.
-void ScriptEditor::resolve_current_scene_move(int p_scene_tab, const String &p_old_path, const String &p_new_path) {
+void ScriptEditor::resolve_edited_scene_move(int p_scene_tab, const String &p_old_path, const String &p_new_path) {
     EditorData *ed = &editor->get_editor_data();
 
     Ref<Script> root_script = ed->get_scene_root_script(p_scene_tab);
