@@ -3570,19 +3570,18 @@ ScriptEditor::~ScriptEditor() {
 	memdelete(completion_cache);
 }
 
-void ScriptEditor::resolve_root_script_move(const String &p_root_script_path) {
-    // FIXME: this method closes unattached/inner scripts, should just check if it's open
-    // TODO: Find way to get path of current scene tab's script, instead of this bullshit
-    // TODO: ! additional note, the path also may not be necessary, as this behavior only occurs with the root node's script
-
+// TODO, the bug persists for all scripts attached in the current tab, should do search for all attached script
+// TODO: renamed this to be more analogous for getting rid of currently attached [unsaved]'s
+void ScriptEditor::resolve_current_scene_move(int p_scene_tab) {
+    String root_script_path = editor->get_editor_data().get_scene_root_script(p_scene_tab)->get_path();
     for (int i = 0; i < tab_container->get_child_count(); ++i) {
         ScriptEditorBase *seb = Object::cast_to<ScriptEditorBase>(tab_container->get_child(i));
         if (!seb) {
             continue;
         }
 
-        print_verbose(vformat("Provided path: (%s), current path: (%s)", p_root_script_path, seb->get_edited_resource()->get_path()));
-        if (seb->get_edited_resource()->get_path() == p_root_script_path) {
+        print_verbose(vformat("Provided path: (%s), current path: (%s)", root_script_path, seb->get_edited_resource()->get_path()));
+        if (seb->get_edited_resource()->get_path() == root_script_path) {
             _close_tab(i, false, false);
             break;
         }

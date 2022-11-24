@@ -1149,11 +1149,11 @@ void FileSystemDock::_try_move_item(const FileOrFolder &p_item, const String &p_
 		}
 
 		// Update scene if it is open.
+        int current_tab = editor->get_current_tab();
 		for (int i = 0; i < file_changed_paths.size(); ++i) {
 			String new_item_path = p_item.is_file ? new_path : file_changed_paths[i].replace_first(old_path, new_path);
 			String resource_type = ResourceLoader::get_resource_type(new_item_path);
             EditorData *ed = &editor->get_editor_data();
-            int current_tab = editor->get_current_tab();
 
             if (resource_type == "PackedScene" && editor->is_scene_open(file_changed_paths[i])) {
 				for (int j = 0; j < ed->get_edited_scene_count(); j++) {
@@ -1164,9 +1164,9 @@ void FileSystemDock::_try_move_item(const FileOrFolder &p_item, const String &p_
 					}
 				}
 			} else if (resource_type == "GDScript" && ed->get_scene_root_script(current_tab)->get_path() == file_changed_paths[i]) {
+                // TODO, the bug persists for all scripts attached in the current tab, should do search for all attached script
                 print_verbose("LOCATED MOVED ROOT SCRIPT AND COMMENCING MOVE");
-//                Ref<Script> root_script = ed->get_scene_root_script(current_tab);
-                ScriptEditor::get_singleton()->resolve_root_script_move(file_changed_paths[i]);
+                ScriptEditor::get_singleton()->resolve_current_scene_move(current_tab);
             }
 		}
 
