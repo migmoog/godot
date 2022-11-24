@@ -1163,10 +1163,8 @@ void FileSystemDock::_try_move_item(const FileOrFolder &p_item, const String &p_
 						break;
 					}
 				}
-			} else if (resource_type == "GDScript" && ed->get_scene_root_script(current_tab)->get_path() == file_changed_paths[i]) {
-                // TODO, the bug persists for all scripts attached in the current tab, should do search for all attached script
-                print_verbose("LOCATED MOVED ROOT SCRIPT AND COMMENCING MOVE");
-                ScriptEditor::get_singleton()->resolve_current_scene_move(current_tab);
+			} else if (resource_type == "GDScript") {
+				ScriptEditor::get_singleton()->resolve_current_scene_move(current_tab, old_path, new_path);
             }
 		}
 
@@ -1175,8 +1173,6 @@ void FileSystemDock::_try_move_item(const FileOrFolder &p_item, const String &p_
 			p_file_renames[file_changed_paths[i]] = file_changed_paths[i].replace_first(old_path, new_path);
 			print_verbose("  Remap: " + file_changed_paths[i] + " -> " + p_file_renames[file_changed_paths[i]]);
 			emit_signal("files_moved", file_changed_paths[i], p_file_renames[file_changed_paths[i]]);
-
-            print_verbose("RESOURCE TYPE: " + ResourceLoader::get_resource_type(file_changed_paths[i]));
 		}
 		for (int i = 0; i < folder_changed_paths.size(); ++i) {
 			p_folder_renames[folder_changed_paths[i]] = folder_changed_paths[i].replace_first(old_path, new_path);

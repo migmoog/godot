@@ -3570,20 +3570,46 @@ ScriptEditor::~ScriptEditor() {
 	memdelete(completion_cache);
 }
 
-// TODO, the bug persists for all scripts attached in the current tab, should do search for all attached script
-// TODO: renamed this to be more analogous for getting rid of currently attached [unsaved]'s
-void ScriptEditor::resolve_current_scene_move(int p_scene_tab) {
-    String root_script_path = editor->get_editor_data().get_scene_root_script(p_scene_tab)->get_path();
+// FIXME: Now this method works, but it also crashes if you move more than one file. Not sure if it's my fault but I assume it is.
+void ScriptEditor::resolve_current_scene_move(int p_scene_tab, const String &p_old_path, const String &p_new_path) {
+    EditorData *ed = &editor->get_editor_data();
+
+    Ref<Script> root_script = ed->get_scene_root_script(p_scene_tab);
+    String root_script_path = root_script.is_valid() ? root_script->get_path() : String();
+
+    Node *root = ed->get_edited_scene_root(p_scene_tab);
+    String found_path;
+    for (int i = 0; i < root->get_child_count(); ++i) {
+        Ref<Script> child_script = root->get_child(i)->get_script();
+        if (child_script.is_null()) {
+            continue;
+        }
+
+        String child_script_path = child_script->get_path();
+        if (child_script_path == p_old_path) {
+            found_path = child_script_path;
+            break;
+        }
+    }
+
+    if (!found_path.size() && root_script_path != p_old_path) {
+        return;
+    }
+
     for (int i = 0; i < tab_container->get_child_count(); ++i) {
         ScriptEditorBase *seb = Object::cast_to<ScriptEditorBase>(tab_container->get_child(i));
         if (!seb) {
             continue;
         }
+        String seb_path = seb->get_edited_resource()->get_path();
 
-        print_verbose(vformat("Provided path: (%s), current path: (%s)", root_script_path, seb->get_edited_resource()->get_path()));
-        if (seb->get_edited_resource()->get_path() == root_script_path) {
+        if (seb_path == root_script_path && root_script_path == p_old_path) {
             _close_tab(i, false, false);
-            break;
+            return;
+        } else if (found_path == seb_path) {
+            _close_tab(i, false, false);
+            _open_script_request(p_new_path);
+            return;
         }
     }
 }
