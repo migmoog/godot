@@ -105,6 +105,7 @@ class PhysicsQuadrant;
 
 struct CellData {
 	Vector2i coords;
+	int frame = 0;
 	TileMapCell cell;
 
 	// Debug
@@ -141,6 +142,7 @@ struct CellData {
 	void operator=(const CellData &p_other) {
 		coords = p_other.coords;
 		cell = p_other.cell;
+		frame = p_other.frame;
 		occluders = p_other.occluders;
 		navigation_regions = p_other.navigation_regions;
 		scene = p_other.scene;
@@ -156,6 +158,7 @@ struct CellData {
 			dirty_list_element(this) {
 		coords = p_other.coords;
 		cell = p_other.cell;
+		frame = p_other.frame;
 		occluders = p_other.occluders;
 		navigation_regions = p_other.navigation_regions;
 		scene = p_other.scene;
@@ -559,6 +562,8 @@ public:
 	void erase_cell(const Vector2i &p_coords);
 	void fix_invalid_tiles();
 	void clear();
+	void set_cell_frame(const Vector2i &p_coords, int frame);
+	int get_cell_frame(const Vector2i &p_coords);
 
 	int get_cell_source_id(const Vector2i &p_coords) const;
 	Vector2i get_cell_atlas_coords(const Vector2i &p_coords) const;

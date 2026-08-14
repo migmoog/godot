@@ -128,6 +128,9 @@ private:
 	Button *transform_button_flip_v = nullptr;
 	SwitchSeparator *transform_separator = nullptr;
 
+	Button *frame_lower_index = nullptr;
+	Button *frame_upper_index = nullptr;
+
 	CheckBox *bucket_contiguous_checkbox = nullptr;
 	Button *random_tile_toggle = nullptr;
 
@@ -172,6 +175,8 @@ private:
 
 	void _apply_transform(TileTransformType p_type);
 	int _get_transformed_alternative(int p_alternative_id, TileTransformType p_transform);
+
+	void _cycle_frame(bool p_increase);
 
 	///// Selection system. /////
 	RBSet<Vector2i> tile_map_selection;

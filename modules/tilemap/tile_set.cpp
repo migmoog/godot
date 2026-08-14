@@ -5100,9 +5100,10 @@ Vector2i TileSetAtlasSource::get_tile_animation_separation(const Vector2i p_atla
 
 void TileSetAtlasSource::set_tile_animation_speed(const Vector2i p_atlas_coords, real_t p_speed) {
 	ERR_FAIL_COND_MSG(!tiles.has(p_atlas_coords), vformat("TileSetAtlasSource has no tile at %s.", Vector2i(p_atlas_coords)));
-	ERR_FAIL_COND(p_speed <= 0);
+	TileAlternativesData &tad = tiles[p_atlas_coords];
+	ERR_FAIL_COND(tad.animation_mode != TILE_ANIMATION_MODE_MANUAL && p_speed <= 0);
 
-	tiles[p_atlas_coords].animation_speed = p_speed;
+	tad.animation_speed = p_speed;
 
 	_try_emit_changed();
 }
@@ -5546,6 +5547,7 @@ void TileSetAtlasSource::_bind_methods() {
 
 	BIND_ENUM_CONSTANT(TILE_ANIMATION_MODE_DEFAULT)
 	BIND_ENUM_CONSTANT(TILE_ANIMATION_MODE_RANDOM_START_TIMES)
+	BIND_ENUM_CONSTANT(TILE_ANIMATION_MODE_MANUAL)
 	BIND_ENUM_CONSTANT(TILE_ANIMATION_MODE_MAX)
 
 	BIND_CONSTANT(TRANSFORM_FLIP_H)
