@@ -33,6 +33,7 @@
 #include "tile_map.h"
 
 #include "core/config/engine.h"
+#include "core/error/error_macros.h"
 #include "core/io/marshalls.h"
 #include "core/math/geometry_2d.h"
 #include "core/math/random_pcg.h"
@@ -381,13 +382,21 @@ void TileMapLayer::_rendering_update(bool p_force_cleanup) {
 
 					// Random animation offset.
 					real_t random_animation_offset = 0.0;
-					if (atlas_source->get_tile_animation_mode(cell_data.cell.get_atlas_coords()) != TileSetAtlasSource::TILE_ANIMATION_MODE_DEFAULT) {
-						Array to_hash = { local_tile_pos, get_instance_id() }; // Use instance id as a random hash
-						random_animation_offset = RandomPCG(to_hash.hash()).randf();
+					int frame = -1;
+					Array to_hash = { local_tile_pos, get_instance_id() }; // Use instance id as a random hash
+					switch (atlas_source->get_tile_animation_mode(cell_data.cell.get_atlas_coords())) {
+						case TileSetAtlasSource::TILE_ANIMATION_MODE_RANDOM_START_TIMES:
+							random_animation_offset = RandomPCG(to_hash.hash()).randf();
+							break;
+						case TileSetAtlasSource::TILE_ANIMATION_MODE_MANUAL:
+							frame = cell_data.frame;
+							break;
+						default:
+							break;
 					}
 
 					// Drawing the tile in the canvas item.
-					draw_tile(ci, local_tile_pos - rendering_quadrant->canvas_items_position, tile_set, cell_data.cell.source_id, cell_data.cell.get_atlas_coords(), cell_data.cell.alternative_tile, -1, tile_data, random_animation_offset);
+					draw_tile(ci, local_tile_pos - rendering_quadrant->canvas_items_position, tile_set, cell_data.cell.source_id, cell_data.cell.get_atlas_coords(), cell_data.cell.alternative_tile, frame, tile_data, random_animation_offset);
 				}
 
 				// Reset physics interpolation for any recreated canvas items.
@@ -2194,6 +2203,7 @@ void TileMapLayer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("erase_cell", "coords"), &TileMapLayer::erase_cell);
 	ClassDB::bind_method(D_METHOD("fix_invalid_tiles"), &TileMapLayer::fix_invalid_tiles);
 	ClassDB::bind_method(D_METHOD("clear"), &TileMapLayer::clear);
+	ClassDB::bind_method(D_METHOD("set_cell_frame", "coords", "frame"), &TileMapLayer::set_cell_frame);
 
 	ClassDB::bind_method(D_METHOD("get_cell_source_id", "coords"), &TileMapLayer::get_cell_source_id);
 	ClassDB::bind_method(D_METHOD("get_cell_atlas_coords", "coords"), &TileMapLayer::get_cell_atlas_coords);
@@ -2853,6 +2863,24 @@ void TileMapLayer::clear() {
 		erase_cell(kv.key);
 	}
 	used_rect_cache_dirty = true;
+}
+
+void TileMapLayer::set_cell_frame(const Vector2i &p_coords, int p_frame) {
+	CellData *cell_data = &tile_map_layer_data.find(p_coords)->value;
+	if (cell_data->cell.source_id == TileSet::INVALID_SOURCE) {
+		return;
+	}
+
+	// TileSetAtlasSource *atlas_source = Object::cast_to<TileSetAtlasSource>(tile_set->sour);
+	TileSetSource *source = *tile_set->get_source(cell_data->cell.source_id);
+	TileSetAtlasSource *atlas_source = Object::cast_to<TileSetAtlasSource>(source);
+	if (!atlas_source) {
+		return;
+	}
+	Vector2i atlas_coords = cell_data->cell.get_atlas_coords();
+	int frame_count = atlas_source->get_tile_animation_frames_count(atlas_coords);
+	ERR_FAIL_INDEX(p_frame, frame_count);
+	cell_data->frame = p_frame;
 }
 
 int TileMapLayer::get_cell_source_id(const Vector2i &p_coords) const {
