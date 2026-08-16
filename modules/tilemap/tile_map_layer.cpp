@@ -304,7 +304,7 @@ void TileMapLayer::_rendering_update(bool p_force_cleanup) {
 			if (has_a_tile) {
 				// Process the quadrant.
 
-				// First, clear the quadrant's canvas items.
+				// First, clear the quadrant's canvas items.bob dole
 				for (RID &ci : rendering_quadrant->canvas_items) {
 					rs->free_rid(ci);
 				}
@@ -2204,6 +2204,7 @@ void TileMapLayer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("fix_invalid_tiles"), &TileMapLayer::fix_invalid_tiles);
 	ClassDB::bind_method(D_METHOD("clear"), &TileMapLayer::clear);
 	ClassDB::bind_method(D_METHOD("set_cell_frame", "coords", "frame"), &TileMapLayer::set_cell_frame);
+	ClassDB::bind_method(D_METHOD("get_cell_frame", "coords"), &TileMapLayer::get_cell_frame);
 
 	ClassDB::bind_method(D_METHOD("get_cell_source_id", "coords"), &TileMapLayer::get_cell_source_id);
 	ClassDB::bind_method(D_METHOD("get_cell_atlas_coords", "coords"), &TileMapLayer::get_cell_atlas_coords);
@@ -2867,7 +2868,7 @@ void TileMapLayer::clear() {
 
 void TileMapLayer::set_cell_frame(const Vector2i &p_coords, int p_frame) {
 	CellData *cell_data = &tile_map_layer_data.find(p_coords)->value;
-	if (cell_data->cell.source_id == TileSet::INVALID_SOURCE) {
+	if (!cell_data) {
 		return;
 	}
 
@@ -2881,6 +2882,19 @@ void TileMapLayer::set_cell_frame(const Vector2i &p_coords, int p_frame) {
 	int frame_count = atlas_source->get_tile_animation_frames_count(atlas_coords);
 	ERR_FAIL_INDEX(p_frame, frame_count);
 	cell_data->frame = p_frame;
+
+	dirty.cell_list.add(&cell_data->dirty_list_element);
+
+	_queue_internal_update();
+}
+
+int TileMapLayer::get_cell_frame(const Vector2i &p_coords) {
+	const CellData *cell_data = tile_map_layer_data.getptr(p_coords);
+	if (!cell_data) {
+		return -1;
+	}
+
+	return cell_data->frame;
 }
 
 int TileMapLayer::get_cell_source_id(const Vector2i &p_coords) const {

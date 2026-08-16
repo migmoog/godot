@@ -563,6 +563,7 @@ public:
 	void fix_invalid_tiles();
 	void clear();
 	void set_cell_frame(const Vector2i &p_coords, int frame);
+	int get_cell_frame(const Vector2i &p_coords);
 
 	int get_cell_source_id(const Vector2i &p_coords) const;
 	Vector2i get_cell_atlas_coords(const Vector2i &p_coords) const;
