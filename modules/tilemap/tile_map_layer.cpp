@@ -2867,7 +2867,7 @@ void TileMapLayer::clear() {
 }
 
 void TileMapLayer::set_cell_frame(const Vector2i &p_coords, int p_frame) {
-	CellData *cell_data = &tile_map_layer_data.find(p_coords)->value;
+	CellData *cell_data = tile_map_layer_data.getptr(p_coords);
 	if (!cell_data) {
 		return;
 	}
