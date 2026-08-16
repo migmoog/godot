@@ -52,8 +52,6 @@
 #include "scene/gui/split_container.h"
 #include "scene/main/scene_tree.h"
 
-#include <cstdio>
-
 void SwitchSeparator::set_vertical(bool p_vertical) {
 	h_separator->set_visible(p_vertical);
 	v_separator->set_visible(!p_vertical);
@@ -128,7 +126,6 @@ void TileMapLayerEditorTilesPlugin::_update_toolbar() {
 				TileSetAtlasSource *atlas_source = Object::cast_to<TileSetAtlasSource>(*tile_set->get_source(kv.value.source_id));
 				if (!atlas_source || atlas_source->get_tile_animation_mode(kv.value.get_atlas_coords()) != TileSetAtlasSource::TILE_ANIMATION_MODE_MANUAL) {
 					selection_is_manual_animation = false;
-					print_line("BAD atlas_source: %d, animation_mode: %d", !!atlas_source, atlas_source->get_tile_animation_mode(kv.value.get_atlas_coords()));
 					break;
 				}
 			}
@@ -144,8 +141,6 @@ void TileMapLayerEditorTilesPlugin::_update_toolbar() {
 	scatter_controls_container->set_visible(!using_select && random_tile_toggle->is_pressed());
 	frame_upper_index->set_visible(using_select && selection_is_manual_animation);
 	frame_lower_index->set_visible(using_select && selection_is_manual_animation);
-
-	print_line("Cycle buttons visibility L: %d, R: %d", frame_lower_index->is_visible(), frame_upper_index->is_visible());
 
 	// frame cycle buttons only apply to
 	CanvasItemEditor::get_singleton()->set_current_tool(CanvasItemEditor::TOOL_SELECT);
@@ -1624,7 +1619,6 @@ void TileMapLayerEditorTilesPlugin::_cycle_frame(bool p_increase) {
 				0,
 				max_frame);
 		layer->set_cell_frame(coords, next_frame);
-		print_line("New cell frame: ", layer->get_cell_frame(coords));
 	}
 }
 

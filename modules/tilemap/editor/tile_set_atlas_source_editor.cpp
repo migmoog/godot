@@ -412,9 +412,17 @@ void TileSetAtlasSourceEditor::AtlasTileProxyObject::_get_property_list(List<Pro
 	// Animation.
 	// Check if all tiles have an alternative_id of 0.
 	bool all_alternatve_id_zero = true;
+	bool all_animation_mode_manual = true;
 	for (TileSelection tile : tiles) {
 		if (tile.alternative != 0) {
 			all_alternatve_id_zero = false;
+		}
+
+		if (tile_set_atlas_source->get_tile_animation_mode(tile.tile) != TileSetAtlasSource::TILE_ANIMATION_MODE_MANUAL) {
+			all_animation_mode_manual = false;
+		}
+
+		if (!(all_alternatve_id_zero || all_animation_mode_manual)) {
 			break;
 		}
 	}
@@ -423,7 +431,9 @@ void TileSetAtlasSourceEditor::AtlasTileProxyObject::_get_property_list(List<Pro
 		p_list->push_back(PropertyInfo(Variant::NIL, GNAME("Animation", "animation_"), PROPERTY_HINT_NONE, "animation_", PROPERTY_USAGE_GROUP));
 		p_list->push_back(PropertyInfo(Variant::INT, PNAME("animation_columns")));
 		p_list->push_back(PropertyInfo(Variant::VECTOR2I, PNAME("animation_separation")));
-		p_list->push_back(PropertyInfo(Variant::FLOAT, PNAME("animation_speed")));
+		if (!all_animation_mode_manual) {
+			p_list->push_back(PropertyInfo(Variant::FLOAT, PNAME("animation_speed")));
+		}
 		p_list->push_back(PropertyInfo(Variant::INT, PNAME("animation_mode"), PROPERTY_HINT_ENUM, "Default,Random Start Times,Manual"));
 		p_list->push_back(PropertyInfo(Variant::INT, PNAME("animation_frames_count"), PROPERTY_HINT_NONE, "", PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_ARRAY, "Frames,animation_frame_"));
 		// Not optimal, but returns value for the first tile. This is similar to what MultiNodeEdit does.
@@ -2154,6 +2164,8 @@ void TileSetAtlasSourceEditor::_tile_set_changed() {
 void TileSetAtlasSourceEditor::_tile_proxy_object_changed(const String &p_what) {
 	tile_set_changed_needs_update = false; // Avoid updating too many things.
 	_update_atlas_view();
+	// _update_tile_inspector();
+	callable_mp(this, &TileSetAtlasSourceEditor::_update_tile_inspector).call_deferred();
 }
 
 void TileSetAtlasSourceEditor::_atlas_source_proxy_object_changed(const String &p_what, const Ref<TileSetAtlasSourceProxyObject> &p_object) {
