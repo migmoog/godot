@@ -52,6 +52,8 @@
 #include "scene/gui/split_container.h"
 #include "scene/main/scene_tree.h"
 
+#include <cstdio>
+
 void SwitchSeparator::set_vertical(bool p_vertical) {
 	h_separator->set_visible(p_vertical);
 	v_separator->set_visible(!p_vertical);
@@ -114,6 +116,25 @@ void TileMapLayerEditorTilesPlugin::_update_toolbar() {
 
 	// Show only the correct settings.
 	const BaseButton *pressed_tool = tool_buttons_group->get_pressed_button();
+
+	// check if the selection can have its frames cycled
+	bool selection_is_manual_animation = false;
+	TileMapLayer *layer = _get_edited_layer();
+	if (layer) {
+		selection_is_manual_animation = true;
+		Ref<TileSet> tile_set = layer->get_tile_set();
+		if (!tile_set.is_null()) {
+			for (const KeyValue<Vector2i, TileMapCell> kv : selection_pattern->get_pattern()) {
+				TileSetAtlasSource *atlas_source = Object::cast_to<TileSetAtlasSource>(*tile_set->get_source(kv.value.source_id));
+				if (!atlas_source || atlas_source->get_tile_animation_mode(kv.value.get_atlas_coords()) != TileSetAtlasSource::TILE_ANIMATION_MODE_MANUAL) {
+					selection_is_manual_animation = false;
+					print_line("BAD atlas_source: %d, animation_mode: %d", !!atlas_source, atlas_source->get_tile_animation_mode(kv.value.get_atlas_coords()));
+					break;
+				}
+			}
+		}
+	}
+
 	bool using_select = (pressed_tool == select_tool_button);
 	tools_settings_vsep->set_visible(!using_select);
 	picker_button->set_visible(!using_select);
@@ -121,6 +142,12 @@ void TileMapLayerEditorTilesPlugin::_update_toolbar() {
 	random_tile_toggle->set_visible(!using_select);
 	bucket_contiguous_checkbox->set_visible(!using_select && pressed_tool == bucket_tool_button);
 	scatter_controls_container->set_visible(!using_select && random_tile_toggle->is_pressed());
+	frame_upper_index->set_visible(using_select && selection_is_manual_animation);
+	frame_lower_index->set_visible(using_select && selection_is_manual_animation);
+
+	print_line("Cycle buttons visibility L: %d, R: %d", frame_lower_index->is_visible(), frame_upper_index->is_visible());
+
+	// frame cycle buttons only apply to
 	CanvasItemEditor::get_singleton()->set_current_tool(CanvasItemEditor::TOOL_SELECT);
 }
 
@@ -545,6 +572,9 @@ void TileMapLayerEditorTilesPlugin::_update_theme() {
 	transform_button_rotate_right->set_button_icon(tiles_bottom_panel->get_editor_theme_icon("RotateRight"));
 	transform_button_flip_h->set_button_icon(tiles_bottom_panel->get_editor_theme_icon("MirrorX"));
 	transform_button_flip_v->set_button_icon(tiles_bottom_panel->get_editor_theme_icon("MirrorY"));
+
+	frame_lower_index->set_button_icon(tiles_bottom_panel->get_editor_theme_icon(SNAME("ArrowLeft")));
+	frame_upper_index->set_button_icon(tiles_bottom_panel->get_editor_theme_icon(SNAME("ArrowRight")));
 
 	missing_atlas_texture_icon = tiles_bottom_panel->get_editor_theme_icon(SNAME("TileSet"));
 	_update_tile_set_sources_list();
@@ -1564,6 +1594,40 @@ int TileMapLayerEditorTilesPlugin::_get_transformed_alternative(int p_alternativ
 			int(transform_transpose) * TileSetAtlasSource::TRANSFORM_TRANSPOSE;
 }
 
+void TileMapLayerEditorTilesPlugin::_cycle_frame(bool p_increase) {
+	TileMapLayer *layer = _get_edited_layer();
+	if (!layer) {
+		return;
+	}
+
+	Ref<TileSet> tile_set = layer->get_tile_set();
+	if (tile_set.is_null()) {
+		return;
+	}
+
+	for (const Vector2i &coords : tile_map_selection) {
+		int current_frame = layer->get_cell_frame(coords);
+		if (current_frame == -1) {
+			continue;
+		}
+
+		TileSetSource *source = *tile_set->get_source(layer->get_cell_source_id(coords));
+		TileSetAtlasSource *atlas_source = Object::cast_to<TileSetAtlasSource>(source);
+		if (!atlas_source) {
+			continue;
+		}
+
+		Vector2i cell_atlas_coords = layer->get_cell_atlas_coords(coords);
+		int max_frame = atlas_source->get_tile_animation_frames_count(cell_atlas_coords);
+		int next_frame = Math::wrapi(
+				current_frame + (p_increase ? 1 : -1),
+				0,
+				max_frame);
+		layer->set_cell_frame(coords, next_frame);
+		print_line("New cell frame: ", layer->get_cell_frame(coords));
+	}
+}
+
 void TileMapLayerEditorTilesPlugin::_update_fix_selected_and_hovered() {
 	TileMapLayer *edited_layer = _get_edited_layer();
 	if (!edited_layer) {
@@ -2323,6 +2387,19 @@ TileMapLayerEditorTilesPlugin::TileMapLayerEditorTilesPlugin() {
 	transform_button_flip_v->connect(SceneStringName(pressed), callable_mp(this, &TileMapLayerEditorTilesPlugin::_apply_transform).bind(TRANSFORM_FLIP_V));
 	transform_button_flip_v->set_accessibility_name(TTRC("Flip Tile Vertically"));
 	viewport_shortcut_buttons.push_back(transform_button_flip_v);
+
+	// Frame cycler
+	frame_lower_index = memnew(Button);
+	frame_lower_index->set_theme_type_variation(SceneStringName(FlatButton));
+	frame_lower_index->set_shortcut(ED_SHORTCUT("tiles_editor/cycle_frame_left", TTRC("Cycle Frame Left"), Key::BRACKETLEFT));
+	frame_lower_index->connect(SceneStringName(pressed), callable_mp(this, &TileMapLayerEditorTilesPlugin::_cycle_frame).bind(false));
+	transform_toolbar->add_child(frame_lower_index);
+
+	frame_upper_index = memnew(Button);
+	frame_upper_index->set_theme_type_variation(SceneStringName(FlatButton));
+	frame_upper_index->set_shortcut(ED_SHORTCUT("tiles_editor/cycle_frame_right", TTRC("Cycle Frame Right"), Key::BRACKETRIGHT));
+	frame_upper_index->connect(SceneStringName(pressed), callable_mp(this, &TileMapLayerEditorTilesPlugin::_cycle_frame).bind(true));
+	transform_toolbar->add_child(frame_upper_index);
 
 	// Continuous checkbox.
 	bucket_contiguous_checkbox = memnew(CheckBox);
