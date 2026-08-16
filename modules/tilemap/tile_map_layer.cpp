@@ -33,7 +33,6 @@
 #include "tile_map.h"
 
 #include "core/config/engine.h"
-#include "core/error/error_macros.h"
 #include "core/io/marshalls.h"
 #include "core/math/geometry_2d.h"
 #include "core/math/random_pcg.h"
@@ -2867,7 +2866,7 @@ void TileMapLayer::clear() {
 }
 
 void TileMapLayer::set_cell_frame(const Vector2i &p_coords, int p_frame) {
-	CellData *cell_data = &tile_map_layer_data.find(p_coords)->value;
+	CellData *cell_data = tile_map_layer_data.getptr(p_coords);
 	if (!cell_data) {
 		return;
 	}
