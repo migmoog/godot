@@ -122,7 +122,7 @@ void TileMapLayerEditorTilesPlugin::_update_toolbar() {
 		selection_is_manual_animation = true;
 		Ref<TileSet> tile_set = layer->get_tile_set();
 		if (!tile_set.is_null()) {
-			for (const KeyValue<Vector2i, TileMapCell> kv : selection_pattern->get_pattern()) {
+			for (const KeyValue<Vector2i, TileMapCell> &kv : selection_pattern->get_pattern()) {
 				TileSetAtlasSource *atlas_source = Object::cast_to<TileSetAtlasSource>(*tile_set->get_source(kv.value.source_id));
 				if (!atlas_source || atlas_source->get_tile_animation_mode(kv.value.get_atlas_coords()) != TileSetAtlasSource::TILE_ANIMATION_MODE_MANUAL) {
 					selection_is_manual_animation = false;
