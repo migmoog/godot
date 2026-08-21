@@ -88,6 +88,13 @@
 				Returns the tile atlas coordinates ID of the cell at coordinates [param coords]. Returns [code]Vector2i(-1, -1)[/code] if the cell does not exist.
 			</description>
 		</method>
+		<method name="get_cell_frame">
+			<return type="int" />
+			<param index="0" name="coords" type="Vector2i" />
+			<description>
+				Returns the atlas frame of the cell at coordinates [param coords]. Returns [code]-1[/code] if the cell does not exist.
+			</description>
+		</method>
 		<method name="get_cell_source_id" qualifiers="const">
 			<return type="int" />
 			<param index="0" name="coords" type="Vector2i" />
@@ -243,6 +250,16 @@
 				- The atlas coordinate identifier [param atlas_coords] identifies a tile coordinates in the atlas (if the source is a [TileSetAtlasSource]). For [TileSetScenesCollectionSource] it should always be [code]Vector2i(0, 0)[/code],
 				- The alternative tile identifier [param alternative_tile] identifies a tile alternative in the atlas (if the source is a [TileSetAtlasSource]), and the scene for a [TileSetScenesCollectionSource].
 				If [param source_id] is set to [code]-1[/code], [param atlas_coords] to [code]Vector2i(-1, -1)[/code], or [param alternative_tile] to [code]-1[/code], the cell will be erased. An erased cell gets [b]all[/b] its identifiers automatically set to their respective invalid values, namely [code]-1[/code], [code]Vector2i(-1, -1)[/code] and [code]-1[/code].
+			</description>
+		</method>
+		<method name="set_cell_frame">
+			<return type="void" />
+			<param index="0" name="coords" type="Vector2i" />
+			<param index="1" name="frame" type="int" />
+			<description>
+				Sets the frame of a cell at coordinates [param coords] to [param frame]. If the index of the frames is out of bounds with the count of frames in the layer's [TileSet],
+				it will raise an error.
+				[b]Note:[/b] This only works if the cell's frame on the atlas is in [TILE_ANIMATION_MODE_MANUAL]
 			</description>
 		</method>
 		<method name="set_cells_terrain_connect">
